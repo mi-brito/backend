@@ -1,0 +1,9 @@
+# Uncomment to enable Azure Monitor OpenTelemetry
+# Ref: aka.ms/functions-azure-monitor-python
+# azure-monitor-opentelemetry
+
+azure-functions
+numpy==1.26.4   # Try an older, very common version
+matplotlib==3.7.5
+pandas==2.1.4
+azure-storage-blob

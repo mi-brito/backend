@@ -1,6 +1,4 @@
-import matplotlib
-matplotlib.use('Agg') # Sets a non-GUI backend
-import matplotlib.pyplot as plt 
+
 
 # --- Función para preparar los datos del frontend para el algoritmo ---
 def preparar_datos_para_algoritmo(nodos, capacidad_vehiculo, ventana_tiempo):
@@ -80,10 +78,8 @@ import os
 import sys
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 from time import perf_counter
 from datetime import datetime, time, timedelta
-import tkinter
 
 import pandas as pd
 
@@ -338,7 +334,7 @@ def seleccion_por_torneo(poblacion, capacidad):
 # Realiza el cruce para permutaciones, con probabilidad pc => [0.6-0.9], 
 # para los horarios de los hijos uno tendra el horario del primer padre y el otro del segundo,
 # para los trayectos de cada camion de los hijos seran de diferentes tamaños al de los padres
-def cruza_de_permutaciones(sol1, sol2, pc):    
+def cruza_de_permutaciones(sol1, sol2, pc, horario):    
     trayecto_de_sol1 = []
     trayecto_de_sol2 = []
     sol_hijo1 = []
@@ -665,7 +661,7 @@ def alg_NSGA2(num_nodos, num_camiones, coordenadas, horario, capacidad):
             # Seleccion por torneo de padres    
             padre1, padre2 = seleccion_por_torneo(poblacion, int(capacidad))
             # Cruza de permutaciones
-            hijo1, hijo2 = cruza_de_permutaciones(poblacion[padre1].solucion, poblacion[padre2].solucion, random.uniform(0.6, 0.9))
+            hijo1, hijo2 = cruza_de_permutaciones(poblacion[padre1].solucion, poblacion[padre2].solucion, random.uniform(0.6, 0.9), horario)
             # Mutacion de los hijos
             hijo1 = mutacion(hijo1.solucion, random.uniform(0.01, 0.1))
             hijo2 = mutacion(hijo2.solucion, random.uniform(0.01, 0.1))

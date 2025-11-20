@@ -8,6 +8,7 @@ numpy==1.26.4
 matplotlib==3.7.5
 pandas==2.1.4
 azure-storage-blob
+python-dotenv
 
 # Librerías nuevas para el servidor web en Docker
 fastapi

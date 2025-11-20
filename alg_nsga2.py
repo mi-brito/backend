@@ -1,7 +1,65 @@
 
+# Añade esto en alg_nsga2.py (asegúrate de importar requests y os arriba)
+import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+def crear_matriz_de_distancias_y_tiempos(coordenadas):
+    """
+    Solicita a la API de Mapbox las matrices de distancias (en metros) y
+    tiempos de viaje (en segundos), formateando correctamente las coordenadas
+    para evitar el error 422.
+    """
+    mapbox_api_key = os.getenv("MAPBOX_API_KEY")
+    if not mapbox_api_key:
+        print("ADVERTENCIA: No se encontró MAPBOX_API_KEY.")
+        return None, None
+
+    # --- LÓGICA DE FORMATEO DE COORDENADAS ---
+    # Mapbox requiere formato "longitud,latitud" (lon,lat).
+    # Tu algoritmo guarda las coordenadas en una estructura anidada donde:
+    # c[0][0] es latitud y c[0][1] es longitud.
+    try:
+        coords_str = ";".join([f"{c[0][1]},{c[0][0]}" for c in coordenadas])
+    except (TypeError, IndexError):
+        print("Advertencia: Estructura de coordenadas inesperada. Intentando formato plano...")
+        # Fallback por si la estructura cambia a una lista simple de tuplas
+        try:
+            coords_str = ";".join([f"{lon},{lat}" for lat, lon in coordenadas])
+        except Exception as e:
+             print(f"ERROR CRÍTICO: No se pudieron formatear las coordenadas: {e}")
+             return None, None
+
+    # Construcción de la URL solicitando distancia y duración
+    url = f"https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coords_str}"
+    params = {
+        'access_token': mapbox_api_key,
+        'annotations': 'distance,duration'
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        # print(f"URL enviada a Mapbox: {response.url}") # Descomentar para depurar
+        
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get('code') == 'Ok' and 'distances' in data and 'durations' in data:
+            print("Matrices de distancias y tiempos creadas exitosamente.")
+            # Devuelve: (matriz_distancias, matriz_tiempos)
+            return data['distances'], data['durations']
+        else:
+            print(f"ERROR MAPBOX: {data.get('message', 'Respuesta incompleta')}")
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR DE CONEXIÓN con Mapbox: {e}")
+        return None, None
+    
 
 # --- Función para preparar los datos del frontend para el algoritmo ---
-def preparar_datos_para_algoritmo(nodos, capacidad_vehiculo, ventana_tiempo):
+def preparar_datos_para_algoritmo(nodos, capacidad_vehiculo, ventana_tiempo, num_camiones):
     """
     Transforma los datos recibidos del frontend (nodos, capacidad, ventana de tiempo)
     al formato que requiere el algoritmo NSGA-II.
@@ -9,7 +67,7 @@ def preparar_datos_para_algoritmo(nodos, capacidad_vehiculo, ventana_tiempo):
     # Número de nodos (incluyendo el depósito)
     num_nodos = len(nodos)
     # Número de camiones (puedes ajustar si tu frontend lo envía diferente)
-    num_camiones = 2  # Valor por defecto, cámbialo si lo recibes del frontend
+    num_camiones = num_camiones  # Valor por defecto, cámbialo si lo recibes del frontend
     # Capacidad de cada camión
     capacidad = capacidad_vehiculo
     # Coordenadas y demanda de cada nodo: [( (x, y), demanda ), ...]
@@ -641,7 +699,7 @@ def obtiene_peor_individuo_del_rango(rango):
     return peor_individuo
 
 # Aplica el algoritmo NSGA-II de acuerdo a los datos que se reciben
-def alg_NSGA2(num_nodos, num_camiones, coordenadas, horario, capacidad):    
+def alg_NSGA2(num_nodos, num_camiones, coordenadas, horario, capacidad, matriz_distancias):    
     mejor_solucion = Individuo(None, 0, 0, 0, 0, [0,None], 0)
     peor_solucion = Individuo(None, 0, 0, 0, 0, [0,None], 0)            
 
